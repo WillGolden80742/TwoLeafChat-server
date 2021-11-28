@@ -26,28 +26,32 @@ import util.States;
  */
 public class TreatConnection implements Runnable {
 
-    private final Socket socket;
+    private Socket socket;
     private States states = States.CONNECTED;
-    
+
     public TreatConnection(Socket socket) {
         this.socket = socket;
     }
 
     public void treatConnection(Socket socket) throws IOException, ClassNotFoundException {
-        ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-        ObjectOutputStream outPut = new ObjectOutputStream(socket.getOutputStream()); 
-        System.out.println("Tratando...");
 
         try {
+
+            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream outPut = new ObjectOutputStream(socket.getOutputStream());
+
+            System.out.println("Tratando...");
+
             while (states != States.EXIT) {
-                Communication communication = (Communication) input.readObject();  
+                Communication communication = (Communication) input.readObject();
                 String operation = communication.getOperation();
-                Communication reply = null;                
+                Communication reply = null;
                 switch (states) {
                     case CONNECTED:
                         reply = executeOperation(operation, communication);
-                        if (String.valueOf(communication.getParam("LOGINREPLY")).equals("OK")) {
-                            states = states.AUTHENTICATED;
+                        if (String.valueOf(reply.getParam("LOGINREPLY")).equals("OK")) {
+                            this.states = states.AUTHENTICATED;
+                            System.out.println("Autenticado!!");
                         }
                         break;
                     case AUTHENTICATED:
@@ -64,8 +68,10 @@ public class TreatConnection implements Runnable {
             outPut.close();
         } catch (IOException ex) {
             System.out.println("Problema no tratamento da conexão com o cliente: " + socket.getInetAddress());
-            System.out.println("Erro: " + ex.getMessage());         
+            System.out.println("Erro: " + ex.getMessage());
+            Logger.getLogger(TreatConnection.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
+            System.out.println("!!!Finalizando!!!");
             closeSocket(socket);
         }
     }
@@ -81,6 +87,16 @@ public class TreatConnection implements Runnable {
                 String loginReply = cliDAO.authenticated((String) communication.getParam("nickName"), (String) communication.getParam("password"));
                 reply.setParam("LOGINREPLY", loginReply);
                 System.out.println("login reply :" + loginReply);
+                break;
+            case "BIOMETRIC":
+                String[] biometricReply = cliDAO.biometricAuthenticated((String) communication.getParam("ANDROIDID"));
+                reply.setParam("BIOMETRICREPLY", biometricReply[0]);
+                reply.setParam("NICKNAME", biometricReply[1]);
+                reply.setParam("WELCOME", biometricReply[2]);
+                System.out.println("login reply :" + biometricReply[0]);
+                break;
+            case "CHECKDEVICE":
+                reply.setParam("CHECKDEVICEREPLY", cliDAO.checkDevice((String) communication.getParam("ANDROIDID")));
                 break;
             case "READ":
                 contactsListDAO cDAO = new contactsListDAO();
@@ -130,7 +146,7 @@ public class TreatConnection implements Runnable {
                 reply.setParam("CHECKCONTACTREPLY", contactDAO.checkContact((String) communication.getParam("nickName"), (String) communication.getParam("contactNickName")));
                 break;
             case "SEARCHCONTACT":
-                reply.setParam("SEARCHCONTACTREPLY", contactDAO.search((String) communication.getParam("nickName")));
+                reply.setParam("SEARCHCONTACTREPLY", cliDAO.search((String) communication.getParam("nickName")));
                 break;
             case "CREATEACCOUNT":
                 byte[] pictureC = (byte[]) communication.getParam("picture");
@@ -146,7 +162,8 @@ public class TreatConnection implements Runnable {
                 String nameE = (String) communication.getParam("name");
                 String nickNameE = (String) communication.getParam("nickName");
                 String passwordE = (String) communication.getParam("password");
-                reply.setParam("EDITACCOUNTREPLY", cliDAO.editAccount(pictureE, formatE, nameE, nickNameE, passwordE));
+                String deviceIDE = (String) communication.getParam("deviceID");
+                reply.setParam("EDITACCOUNTREPLY", cliDAO.editAccount(pictureE, formatE, nameE, nickNameE, deviceIDE, passwordE));
                 break;
             case "PROFILEIMAGE":
                 reply.setParam("PROFILEIMAGEREPLY", cliDAO.profilePic((String) communication.getParam("nickName")));

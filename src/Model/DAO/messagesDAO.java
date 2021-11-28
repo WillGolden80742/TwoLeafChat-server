@@ -230,7 +230,7 @@ public class messagesDAO {
         ResultSet rs = null;
         int id = 0;
         try {
-            stmt = con.prepareStatement("SELECT Idmessage FROM messages WHERE Messages.MsgFrom = '" + nickName + "' ORDER BY Messages.Date DESC limit 1");
+            stmt = con.prepareStatement("SELECT Idmessage FROM messages WHERE messages.MsgFrom = '" + nickName + "' ORDER BY messages.Date DESC limit 1");
             rs = stmt.executeQuery();
 
             while (rs.next()) {

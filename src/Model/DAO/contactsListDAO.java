@@ -66,25 +66,4 @@ public class contactsListDAO {
         return count;
     }
 
-    public Contact search(String nickName) {
-
-        Connection con = ConnectionFactory.getConnection();
-
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        Contact contact = new Contact();
-        try {
-            stmt = con.prepareStatement("SELECT * FROM clientes WHERE clientes.nickName LIKE '" + nickName + "'");
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                contact.setNickName(rs.getString("nickName"));
-                contact.setNome(rs.getString("nomeCliente"));
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(contactsListDAO.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            ConnectionFactory.closeConnection(con, stmt, rs);
-        }
-        return contact;
-    }
 }
