@@ -36,7 +36,6 @@ public class TreatConnection implements Runnable {
     public void treatConnection(Socket socket) throws IOException, ClassNotFoundException {
 
         try {
-
             ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream outPut = new ObjectOutputStream(socket.getOutputStream());
 
